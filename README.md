@@ -122,6 +122,14 @@ The system retrieved chunks from both doc3.txt (monthly costs) and doc10.txt (an
 
 ## AI Usage
 
-**Instance 1:** I asked Claude to generate the ingestion and chunking script based on my planning.md chunking strategy section. Claude generated working code using RecursiveCharacterTextSplitter. I changed the import from langchain.text_splitter to langchain_text_splitters because the package structure changed in newer versions.
+**Instance 1:** I designed the chunking strategy myself based on reading the 
+documents and deciding 300 character chunks with 50 overlap fit the short 
+Reddit-style content. I then asked Claude to implement the ingestion script 
+based on my spec. The generated code had a wrong import path which I caught 
+and fixed myself.
 
-**Instance 2:** I asked Claude to generate the Gradio interface code. Claude generated a working interface. I kept the code as generated because it matched the requirements exactly including the two output fields for answer and sources.
+**Instance 2:** I asked Claude to help write the Gradio interface structure. 
+I decided the design myself - two separate output fields for answer and sources 
+so attribution is always visible. I tested every query myself and identified 
+the failure case in Q3 independently by reading the retrieved chunks and 
+noticing the annual vs monthly cost confusion.
