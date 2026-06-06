@@ -1,122 +1,69 @@
-# Project 1 Planning: The Unofficial Guide
-
-> Write this document before you write any pipeline code.
-> Your spec and architecture diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
-> Update the Retrieval Approach and Chunking Strategy sections if you change your approach during implementation.
-> Update this file before starting any stretch features.
-
----
-
 ## Domain
-
-<!-- What domain did you choose? Why is this knowledge valuable and hard to find through official channels? -->
-
----
+Off-campus housing experiences for college students. This knowledge is valuable because official university websites only provide generic housing resources and approved landlord lists. The real student experience — which landlords are responsive, which apartments have hidden problems, what costs are actually involved — is shared informally between students and is hard to find in one place.
 
 ## Documents
-
-<!-- List your specific sources: URLs, subreddit names, forum threads, or file descriptions.
-     Aim for at least 10 sources that together cover different subtopics or perspectives within your domain. -->
-
-| # | Source | Description | URL or location |
-|---|--------|-------------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
-
----
+1. doc1.txt - Reddit r/college: Move-in inspection tips and what to check before signing
+2. doc2.txt - Reddit r/Apartmentliving: Landlord problems and tenant rights
+3. doc3.txt - Reddit r/college: Real monthly cost breakdown for off-campus apartment
+4. doc4.txt - Reddit r/college: Roommate problems and written agreements
+5. doc5.txt - Reddit r/college: Questions to ask before signing a lease
+6. doc6.txt - Reddit r/Apartmentliving: How to get your full security deposit back
+7. doc7.txt - Reddit r/college: When and how to search for apartments
+8. doc8.txt - Reddit r/Apartmentliving: Safety tips for first-time renters
+9. doc9.txt - Reddit r/Apartmentliving: Maintenance and repair guide
+10. doc10.txt - Reddit r/college: Dorms vs off-campus honest comparison
 
 ## Chunking Strategy
-
-<!-- How will you split documents into chunks?
-     State your chunk size (in tokens or characters), overlap size, and explain why those
-     numbers fit the structure of your documents.
-     A review-heavy corpus warrants different chunking than a long FAQ. -->
-
-**Chunk size:**
-
-**Overlap:**
-
-**Reasoning:**
-
----
+Chunk size: 300 characters with 50 character overlap.
+These documents are short to medium length Reddit posts with distinct tips and comments. Each tip or comment is a self-contained thought. Smaller chunks of 300 characters ensure each chunk contains one specific piece of advice that can be matched precisely to a user query. Overlap of 50 characters ensures that tips split across a boundary are still retrievable.
 
 ## Retrieval Approach
-
-<!-- Which embedding model are you using (e.g., all-MiniLM-L6-v2 via sentence-transformers)?
-     How many chunks will you retrieve per query (top-k)?
-     If you were deploying this for real users and cost wasn't a constraint, what tradeoffs
-     would you weigh in choosing a different embedding model — context length, multilingual
-     support, accuracy on domain-specific text, latency? -->
-
-**Embedding model:**
-
-**Top-k:**
-
-**Production tradeoff reflection:**
-
----
+Embedding model: all-MiniLM-L6-v2 from sentence-transformers. Runs locally with no API key.
+Vector store: ChromaDB running locally.
+Top-k: retrieve top 5 chunks per query.
+Semantic search finds relevant chunks even when the query uses different words than the document because the model understands meaning not just keywords.
+Production tradeoffs: all-MiniLM-L6-v2 is fast and free but has limited context length of 256 tokens. For production I would consider text-embedding-3-small from OpenAI for better accuracy or a multilingual model if serving international students.
 
 ## Evaluation Plan
+Q1: How do I protect my security deposit when moving in?
+Expected answer: Take photos and video of everything on move-in day and email them to landlord with timestamp.
 
-<!-- List your 5 test questions with their expected correct answers.
-     Questions should be specific enough that you can judge whether the system's response
-     is right or wrong. "What are good dining halls?" is too vague.
-     "What do students say about wait times at [dining hall name] during lunch?" is testable. -->
+Q2: What should I do if my landlord refuses to make repairs?
+Expected answer: Submit repair requests in writing via email, contact city housing code enforcement if ignored.
 
-| # | Question | Expected answer |
-|---|----------|-----------------|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
+Q3: How much does off-campus housing actually cost per month?
+Expected answer: Approximately $1,100 to $1,200 per month per person including rent, utilities, groceries, and insurance.
 
----
+Q4: When should I start looking for an apartment for next fall?
+Expected answer: Start searching in January or February, about 7 to 8 months before move-in.
+
+Q5: What are my rights if my roommate stops paying rent?
+Expected answer: Both tenants on a joint lease are responsible for full rent. You can pay and sue roommate in small claims court.
 
 ## Anticipated Challenges
-
-<!-- What could go wrong? Name at least two specific risks with reasoning.
-     Consider: noisy or inconsistent documents, missing source attribution, off-topic
-     retrieval, chunks that split key information across boundaries. -->
-
-1.
-
-2.
-
----
-
-## Architecture
-
-<!-- Draw a diagram of your pipeline showing the five stages:
-     Document Ingestion → Chunking → Embedding + Vector Store → Retrieval → Generation
-     Label each stage with the tool or library you're using.
-     You can use ASCII art, a Mermaid diagram, or embed a sketch as an image.
-     You'll use this diagram as context when prompting AI tools to implement each stage. -->
-
----
+Documents may have inconsistent formatting since they came from Reddit posts.
+Some chunks may be too short to carry enough semantic meaning if tips are very brief.
+Queries using formal language may not match informal Reddit-style writing in chunks.
+Source attribution must be programmatically guaranteed not left to the LLM to add.
 
 ## AI Tool Plan
+I will use Claude to generate the ingestion and chunking script based on this planning.md.
+I will use Claude to generate the embedding and ChromaDB storage code.
+I will use Claude to generate the Groq LLM connection and prompt template.
+I will use Claude to generate the Gradio interface code.
+I will review and test all generated code myself before running it.
 
-<!-- For each part of the pipeline below, describe:
-     - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, which requirements)
-     - What you expect it to produce
-     - How you'll verify the output matches your spec
-
-     "I'll use AI to help me code" is not a plan.
-     "I'll give Claude my Chunking Strategy section and ask it to implement chunk_text()
-     with my specified chunk size and overlap" is a plan. -->
-
-**Milestone 3 — Ingestion and chunking:**
-
-**Milestone 4 — Embedding and retrieval:**
-
-**Milestone 5 — Generation and interface:**
+## Architecture
+Document Ingestion (plain text loader)
+        ↓
+Chunking (RecursiveCharacterTextSplitter, size=300, overlap=50)
+        ↓
+Embedding (sentence-transformers all-MiniLM-L6-v2)
+        ↓
+Vector Store (ChromaDB local)
+        ↓
+Retrieval (top-5 semantic search)
+        ↓
+Generation (Groq llama-3.3-70b-versatile)
+        ↓
+Answer with Source Attribution (Gradio UI)
