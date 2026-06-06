@@ -1,162 +1,127 @@
-# The Unofficial Guide — Project 1
+# The Unofficial Off-Campus Housing Guide
 
-> **How to use this template:**
-> Complete each section *after* you've built and tested the corresponding part of your system.
-> Do not write placeholder text — if a section isn't done yet, leave it blank and come back.
-> Every section below is required for submission. One-liners will not receive full credit.
+A RAG (Retrieval-Augmented Generation) system that makes student-generated housing knowledge searchable and answerable.
 
----
+## Domain and Document Sources
 
-## Domain
+Off-campus housing experiences for college students. This knowledge is valuable because official university websites only provide generic housing resources. The real student experience is shared informally and hard to find in one place.
 
-<!-- What topic or category of knowledge does your system cover?
-     Why is this knowledge valuable, and why is it hard to find through official channels?
-     Example: "Student reviews of CS professors at [university] — useful because official
-     course descriptions don't reflect teaching style, exam difficulty, or workload." -->
+**Sources:**
+- doc1.txt - Reddit r/college: Move-in inspection tips
+- doc2.txt - Reddit r/Apartmentliving: Landlord problems and tenant rights
+- doc3.txt - Reddit r/college: Real monthly cost breakdown
+- doc4.txt - Reddit r/college: Roommate problems and solutions
+- doc5.txt - Reddit r/college: Questions to ask before signing a lease
+- doc6.txt - Reddit r/Apartmentliving: How to get your security deposit back
+- doc7.txt - Reddit r/college: When and how to search for apartments
+- doc8.txt - Reddit r/Apartmentliving: Safety tips for first-time renters
+- doc9.txt - Reddit r/Apartmentliving: Maintenance and repair guide
+- doc10.txt - Reddit r/college: Dorms vs off-campus honest comparison
 
----
+## Chunking Strategy and Reasoning
 
-## Document Sources
+Chunk size: 300 characters with 50 character overlap.
 
-<!-- List every source you collected documents from.
-     Be specific: include URLs, subreddit names, forum thread titles, or file names.
-     Aim for variety — sources that together cover different subtopics or perspectives. -->
+These documents are Reddit posts with short, self-contained tips. Smaller chunks of 300 characters ensure each chunk contains one specific piece of advice that matches precisely to a user query. Overlap of 50 characters ensures tips split across boundaries are still retrievable.
 
-| # | Source | Type | URL or file path |
-|---|--------|------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
+## Sample Chunks
 
----
+**Chunk 1 (doc1.txt):**
+"Always inspect the apartment before signing. Look for mold under sinks and in bathrooms. Check all appliances work."
 
-## Chunking Strategy
+**Chunk 2 (doc2.txt):**
+"In most states landlords are legally required to provide working heat within 24 to 72 hours of a repair request during winter."
 
-<!-- Describe your chunking approach with enough specificity that someone else could reproduce it.
-     Include:
-     - Chunk size (characters or tokens) and why that size fits your documents
-     - Overlap size and why (or why not) you used overlap
-     - Any preprocessing you did before chunking (e.g., stripping HTML, removing headers)
-     - What your final chunk count was across all documents -->
+**Chunk 3 (doc3.txt):**
+"Monthly costs per person in a 2 bedroom apartment. Rent 680 dollars. Electricity 95 to 160 dollars. Total monthly cost approximately 1177 dollars per person."
 
-**Chunk size:**
+**Chunk 4 (doc6.txt):**
+"Before unloading any boxes do a full walkthrough of the empty apartment. Photograph every single room from multiple angles."
 
-**Overlap:**
-
-**Why these choices fit your documents:**
-
-**Final chunk count:**
-
----
+**Chunk 5 (doc7.txt):**
+"For fall semester move-in start searching in January or February which is 7 to 8 months before move-in."
 
 ## Embedding Model
 
-<!-- Name the embedding model you used and explain your choice.
-     Then answer: if you were deploying this system for real users and cost wasn't a constraint,
-     what tradeoffs would you weigh in choosing a different model?
-     Consider: context length limits, multilingual support, accuracy on domain-specific text,
-     latency, and local vs. API-hosted. -->
+Model used: all-MiniLM-L6-v2 from sentence-transformers. Runs locally with no API key and no rate limits.
 
-**Model used:**
+**Production tradeoffs:**
+- Cost: all-MiniLM-L6-v2 is free and local. OpenAI text-embedding-3-small costs money but has better accuracy.
+- Context length: all-MiniLM-L6-v2 supports 256 tokens which fits our short chunks well.
+- Multilingual support: this model is English only. For international students a multilingual model would be needed.
+- Local vs API: local model means no internet dependency but uses more local compute.
 
-**Production tradeoff reflection:**
+## Retrieval Test Results
 
----
+**Query 1: How do I protect my security deposit?**
+Top chunks returned from doc6.txt, doc1.txt, doc8.txt. These chunks directly discuss move-in documentation, photo evidence, and deposit protection strategies. Highly relevant.
 
-## Grounded Generation
+**Query 2: What should I do if my landlord refuses repairs?**
+Top chunks returned from doc2.txt, doc9.txt. These chunks discuss tenant rights, written repair requests, and contacting housing code enforcement. Directly relevant.
 
-<!-- Explain how your system enforces grounding — how does it prevent the LLM from answering
-     beyond the retrieved documents?
-     Describe both your system prompt (what instruction you gave the model) and any structural
-     choices (e.g., how you formatted the context, whether you filtered low-relevance chunks).
-     Do not just say "I told it to use the documents" — show the actual instruction or explain
-     the mechanism. -->
+**Query 3: How much does off campus housing cost per month?**
+Top chunks returned from doc3.txt, doc7.txt, doc10.txt. doc3.txt contains the exact cost breakdown. Relevant but system retrieved some annual cost figures alongside monthly figures causing minor confusion.
 
-**System prompt grounding instruction:**
+## How Grounded Generation is Enforced
 
-**How source attribution is surfaced in the response:**
+The system prompt explicitly instructs the LLM: "Answer the question using ONLY the information provided in the documents below. If the documents do not contain enough information to answer the question, say I don't have enough information on that topic in my documents. Do not use any outside knowledge."
 
----
+Source attribution is programmatically guaranteed by extracting source filenames from ChromaDB metadata and appending them to every response regardless of what the LLM generates.
+
+## Example Responses
+
+**Query: How do I protect my security deposit when moving in?**
+Answer: To protect your security deposit when moving in, you should verify that the landlord owns the property before paying anything, and always pay by check or bank transfer, never in cash. Additionally, you should inspect the unit inside before signing the lease to document its condition.
+Sources: doc8.txt, doc1.txt, doc6.txt, doc2.txt, doc5.txt
+
+**Query: What are my rights if my roommate stops paying rent?**
+Answer: If your roommate stops paying rent, you are still legally responsible for the full rent due to joint and several liability. However, you can pay the full rent to avoid eviction and then sue your roommate in small claims court to recover the unpaid amount.
+Sources: doc4.txt, doc2.txt
+
+**Out-of-scope query: What is the weather like in Paris?**
+Answer: I don't have enough information on that topic in my documents.
+Sources: doc4.txt, doc3.txt, doc2.txt
+
+## Query Interface
+
+The interface is built with Gradio and has two input/output fields:
+- Input: "Your Question" text box where users type their housing question
+- Output: "Answer" text box showing the grounded response
+- Output: "Sources" text box showing which documents the answer came from
+
+**Sample interaction:**
+Question: When should I start looking for an apartment for next fall?
+Answer: For fall semester move-in, you should start searching in January or February, which is 7 to 8 months before move-in. The best selection is available in February and March.
+Sources: doc7.txt, doc8.txt, doc5.txt
 
 ## Evaluation Report
 
-<!-- Run your 5 test questions from planning.md through your system and record the results.
-     Be honest — a partially accurate or inaccurate result that you explain well is more
-     valuable than a suspiciously perfect result. -->
+| Question | Expected Answer | System Response | Judgment |
+|---|---|---|---|
+| How do I protect my security deposit? | Take photos on move-in day, email to landlord | Correctly mentioned documentation, bank transfer, verifying landlord | Accurate |
+| What to do if landlord refuses repairs? | Submit written request, contact code enforcement | Correctly mentioned written notice, tenant hotline, code enforcement | Accurate |
+| How much does off campus housing cost? | Approximately $1177/month per person | Got $1177 correct but also confused with annual $8400 figure | Partially Accurate |
+| When to start looking for fall apartment? | January or February, 7-8 months before | Correctly said January or February, 7 to 8 months before | Accurate |
+| Rights if roommate stops paying rent? | Joint liability, can sue in small claims | Correctly explained joint liability and small claims court | Accurate |
 
-| # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
-|---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+## Failure Case
 
-**Retrieval quality:** Relevant / Partially relevant / Off-target  
-**Response accuracy:** Accurate / Partially accurate / Inaccurate
+**Question 3: How much does off campus housing cost per month?**
 
----
+The system retrieved chunks from both doc3.txt (monthly costs) and doc10.txt (annual costs). The annual figure of $8400 appeared in the context alongside the monthly figure of $1177. The LLM then attempted to reconcile these two numbers by dividing $8400 by 12, producing an unnecessary and confusing calculation.
 
-## Failure Case Analysis
+**Why it happened:** The chunks were too small to include the full context explaining that $8400 is the annual total and $1177 is the monthly per-person cost. The retrieval pulled both figures without enough surrounding context to distinguish them.
 
-<!-- Identify at least one question where retrieval or generation did not work as expected.
-     Write a specific explanation of *why* it failed, tied to a part of the pipeline.
-
-     "The answer was wrong" is not an explanation.
-
-     "The relevant information was split across a chunk boundary, so retrieval returned
-     only half the context — the model didn't have enough to answer correctly" is an explanation.
-
-     "The embedding model treated the professor's nickname as out-of-vocabulary and returned
-     results from an unrelated review" is an explanation. -->
-
-**Question that failed:**
-
-**What the system returned:**
-
-**Root cause (tied to a specific pipeline stage):**
-
-**What you would change to fix it:**
-
----
+**How to fix it:** Increase chunk size to 500 characters so annual and monthly cost figures appear in the same chunk with their labels.
 
 ## Spec Reflection
 
-<!-- Reflect on how planning.md shaped your implementation.
-     Answer both questions with at least 2–3 sentences each. -->
+**How the spec helped:** Writing the evaluation plan in planning.md before coding forced me to define specific verifiable questions upfront. This made testing much faster because I knew exactly what to look for.
 
-**One way the spec helped you during implementation:**
-
-**One way your implementation diverged from the spec, and why:**
-
----
+**How implementation diverged:** The spec planned for chunk size of 300 characters but the cost question failure suggests 500 characters would work better for documents that contain multiple related numbers. I would increase chunk size if rebuilding.
 
 ## AI Usage
 
-<!-- Describe at least 2 specific instances where you used an AI tool during this project.
-     For each: what did you give the AI as input, what did it produce, and what did you
-     change, override, or direct differently?
+**Instance 1:** I asked Claude to generate the ingestion and chunking script based on my planning.md chunking strategy section. Claude generated working code using RecursiveCharacterTextSplitter. I changed the import from langchain.text_splitter to langchain_text_splitters because the package structure changed in newer versions.
 
-     "I used Claude to help me code" is not sufficient.
-     "I gave Claude my Chunking Strategy section from planning.md and asked it to implement
-     chunk_text(). It returned a function using a fixed character split. I overrode the
-     chunk size from 500 to 200 because my documents are short reviews, not long guides." -->
-
-**Instance 1**
-
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
-
-**Instance 2**
-
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+**Instance 2:** I asked Claude to generate the Gradio interface code. Claude generated a working interface. I kept the code as generated because it matched the requirements exactly including the two output fields for answer and sources.
